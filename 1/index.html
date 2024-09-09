@@ -11,7 +11,7 @@
             padding: 0;
         }
         header {
-            background-color: #4CAF50;
+            background-color: #21b32d;
             color: white;
             padding: 10px 0;
             text-align: center;
@@ -23,12 +23,26 @@
             text-align: center;
         }
         .content {
+            font-size: large;
+            line-height: 1.5;
             padding: 20px;
             text-align: left;
         }
         .content img {
             max-width: 100%;
             height: auto;
+        }
+        .column {
+          float: left;
+          width: 33.33%;
+          padding: 5px;
+        }
+
+        /* Clear floats after image containers */
+        .row::after {
+          content: "";
+          clear: both;
+          display: table;
         }
     </style>
 </head>
@@ -48,8 +62,8 @@
         he came up with a simple yet genious idea - record three exposures of every scene onto a glass plate using a red, a green, and a blue filter.
         Later, the revolution began and right after, he left Russia in 1918, never to return again. Fortunately, his RGB glass plate negatives, capturing 
         the last years of the Russian Empire, survived and were purchased in 1948 by the Library of Congress (LOC). The LoC has recently digitized the 
-        negatives and made them available online.
-
+        negatives and made them available online. <br>
+        <br>
         The goal of this project is to automate the production of a color image given the three channels of the same image, in particular the digitized
         Prokudin-Gorskii glass plate images!
     </p>
@@ -63,7 +77,29 @@
     <p>In this project, only x-y translation model is applied due to the interest of time. In accordance to project guidances, I used the blue channel 
     as the reference channel, subsequently align the red and green channels to the blue channel. I will explain the my attempt in producing a color image
     with few visual artifacts.</p>
-    <img src="./media/cathedral_0.jpg" alt="Cathedral with no alignment">
+    <ol>
+        <li>Baseline: simple put the channels together without any preprocessing or translation</li>
+        <li>Translation using NCC: a brute force algorithm which searches over the displacement window of [-15, 15] x [-15, 15]. Normalized Cross Correlation
+            (NCC) is used as the metric to compute the similarity of the shifted channel and the reference channel.</li>
+        <li>Translation with inner pixels and auto-cropping: With the same algorithm that search over a displacement window, I implemented an auto-cropping function
+            that detects color borders uniformly. It extracts pixel values from the edges (top, bottom, left, right) of all RGB channels. Then it calculates the
+            standard deviation (s.d.) of each edge for all channels. The idea is that if the s.d. is low across all channels, i.e. the color isn't changing much,
+            I can treat them as color borders and cropped them. Additionally, I used the inner 80% pixels for the calculation of ncc metric, which makes the 
+            process faster and disregard the noisy borders that failed to be recognize by the auto-cropping function.
+        </li>
+      </ol>
+
+    <div class="row">
+      <div class="column">
+        <img src="./media/cathedral_0.jpg" alt="Baseline - no alignment" style="width:100%">
+      </div>
+      <div class="column">
+        <img src="./media/cathedral_1.jpg" alt="NCC translation - no preprocessing" style="width:100%">
+      </div>
+      <div class="column">
+        <img src="img_mountains.jpg" alt="Translation with preprocessing" style="width:100%">
+      </div>
+    </div>
 </div>
 
 </body>
