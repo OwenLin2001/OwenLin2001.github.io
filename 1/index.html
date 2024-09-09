@@ -24,7 +24,7 @@
         }
         .content {
             padding: 20px;
-            text-align: center;
+            text-align: left;
         }
         .content img {
             max-width: 100%;
@@ -38,10 +38,10 @@
     <h1>Project 1: Images of the Russian Empire</h1>
 </header>
 
+    
 <div class="subheader">
     <h2>Background</h2>
 </div>
-
 <div class="content">
     <p> Sergei Mikhailovich Prokudin-Gorskii, a famous photographer who won Tzar's special permission to travel across 
         the vast Russian Empire and take color photographs of everything he saw. ALthough there was not a way to print color photographs in his era, 
@@ -49,11 +49,20 @@
         Later, the revolution began and right after, he left Russia in 1918, never to return again. Fortunately, his RGB glass plate negatives, capturing 
         the last years of the Russian Empire, survived and were purchased in 1948 by the Library of Congress (LOC). The LoC has recently digitized the 
         negatives and made them available online.
+
+        The goal of this project is to automate the production of a color image given the three channels of the same image, in particular the digitized
+        Prokudin-Gorskii glass plate images!
     </p>
-<\div>
+</div>
+
     
+<div class="subheader">
+    <h2>Methodology</h2>
+</div>
 <div class="content">
-    <p>Here is some content for the webpage. You can write anything you want here.</p>
+    <p>In this project, only x-y translation model is applied due to the interest of time. In accordance to project guidances, I used the blue channel 
+    as the reference channel, subsequently align the red and green channels to the blue channel. I will explain the my attempt in producing a color image
+    with few visual artifacts.</p>
     <img src="./media/cathedral_0.jpg" alt="Cathedral with no alignment">
 </div>
 
