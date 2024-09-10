@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 10px;
+            margin: 0px;
             padding: 0;
         }
         header {
@@ -27,6 +27,10 @@
             line-height: 1.5;
             padding: 20px;
             text-align: left;
+            margin: 10px 150px 10px;
+        }
+        .p {
+            margin: 10px 150px 10px;
         }
         .content img {
             max-width: 100%;
@@ -34,15 +38,35 @@
         }
         .column {
           float: left;
-          width: 33.33%;
-          padding: 5px;
+          width: 33.1%;
+          padding: 1px;
         }
-
         /* Clear floats after image containers */
         .row::after {
           content: "";
           clear: both;
           display: table;
+        }
+        .row {
+            margin: 10px 150px 25px;
+        }
+        .column2 {
+          float: left;
+          width: 40%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row2::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row2 {
+            margin: 10px 150px 25px;
+        }
+        /* Centered caption*/
+        figure {
+          text-align: center; 
         }
     </style>
 </head>
@@ -61,7 +85,7 @@
         the vast Russian Empire and take color photographs of everything he saw. ALthough there was not a way to print color photographs in his era, 
         he came up with a simple yet genious idea - record three exposures of every scene onto a glass plate using a red, a green, and a blue filter.
         Later, the revolution began and right after, he left Russia in 1918, never to return again. Fortunately, his RGB glass plate negatives, capturing 
-        the last years of the Russian Empire, survived and were purchased in 1948 by the Library of Congress (LOC). The LoC has recently digitized the 
+        the last years of the Russian Empire, survived and were purchased in 1948 by the Library of Congress (LoC). The LoC has recently digitized the 
         negatives and made them available online. <br>
         <br>
         The goal of this project is to automate the production of a color image given the three channels of the same image, in particular the digitized
@@ -71,7 +95,7 @@
 
     
 <div class="subheader">
-    <h2>Methodology</h2>
+    <h2>Methodology: Single Scale Alignment</h2>
 </div>
 <div class="content">
     <p>In this project, only x-y translation model is applied due to the interest of time. In accordance to project guidances, I used the blue channel 
@@ -84,32 +108,182 @@
         <li>Translation with inner pixels and auto-cropping: With the same algorithm that search over a displacement window, I implemented an auto-cropping function
             that detects color borders uniformly. It extracts pixel values from the edges (top, bottom, left, right) of all RGB channels. Then it calculates the
             standard deviation (s.d.) of each edge for all channels. The idea is that if the s.d. is low across all channels, i.e. the color isn't changing much,
-            I can treat them as color borders and cropped them. Additionally, I used the inner 80% pixels for the calculation of ncc metric, which makes the 
+            I can treat them as color borders and crop them. Additionally, I used the inner 80% pixels for the calculation of ncc metric, which makes the 
             process faster and disregard the noisy borders that failed to be recognize by the auto-cropping function.
         </li>
+        <li> The idea of Bells and Whistles is applied between the second and the third image. In particular, automate border cropping makes the image more sharp in 
+            lower right corner. Albeit it fails to detect the noisy borders in the top left corner. On the other hand, automatic white balancing and contrasting didn't 
+            seem to affect the image much. I believe it's because of the naive methods being used, and including techniques such non-linear functions or other ways
+            to estimate the illuminant can definitely boost the performance.</li>
       </ol>
+</div>
 
-    <div class="row">
-      <div class="column">
+
+<div class="row">
+    <div class="column">
         <figure>
-            <img src="./media/cathedral_0.jpg" alt="Baseline - no alignment" style="width:100%">
+            <img src="./media/cathedral_0.jpg" alt="Baseline w/no alignment" style="width:100%">
             <figcaption>Baseline w/ no alignment</figcaption>
-        </figure>
-      </div>
-      <div class="column">
+            <figcaption>Red [0, 0], Green: [0, 0]</figcaption>
+        </figure> 
+    </div>
+    <div class="column">
         <figure>
-            <img src="./media/cathedral_1.jpg" alt="NCC translation w/ no preprocessing" style="width:100%">
+            <img src="./media/cathedral_1.jpg" alt="NCC translation w/no preprocessing" style="width:100%">
             <figcaption>NCC translation w/ no preprocessing</figcaption>
+            <figcaption>Red [-1, 1], Green: [-1, 7]</figcaption>
         </figure>
-      </div>
-      <div class="column">
+    </div>
+    <div class="column">
         <figure>
             <img src="./media/cathedral_2.jpg" alt="Translation with preprocessing" style="width:100%">
             <figcaption>Translation with preprocessing</figcaption>
+            <figcaption>Red [2, 5], Green: [3, 12]</figcaption>
         </figure>
-      </div>
     </div>
 </div>
+
+
+<div class="subheader">
+    <h2>Methodology: Multi Scale Alignment (Image Pyramid)</h2>
+</div>
+
+<div class="content">
+    <p>
+        For higher-resolution glass plate scans in .tif format, the exhausive search becomes prohibitively expensive with a larger displacement search window in proportion to its size.
+        Yet if I keep a small displacement window [-15, 15] x [-15, 15] like I did in single scale alignment, it is likely to miss the optimal displacement vector. As a result,
+        the pyramid search algorithm was used which downscales the image, and it allows me to update the optimal displacement layer by layer. The process was fairly simple: keep
+        downscaling the image by a order of 2 until it is less than 300 pixels (same as the size of previous .jpg images). Then starting from the coarsest scale and going down the pyramid, I compute the 
+        optimal displacement at each layer by calling the single_scale_align function and scales up by 2 in the following layer. This process is continued until the image is in its original size.
+    </p>
+</div>
+
+<div class="row2">
+    <div class="column2">
+        <figure>
+            <img src="./media/melons_0.jpg" alt="Baseline" style="width:100%">
+            <figcaption>Baseline</figcaption>
+            <figcaption>Red [0, 0], Green: [0, 0]</figcaption>
+        </figure>
+    </div>
+    <div class="column2">
+        <figure>
+            <img src="./media/melons_1.jpg" alt="Translation w/image pyramid" style="width:100%">
+            <figcaption>Translation w/image pyramid</figcaption>
+            <figcaption>Red [13, 178], Green: [10, 82]</figcaption>
+        </figure>
+    </div>
+</div>
+
+
+
+<div class="content">
+    <p>
+        For higher-resolution glass plate scans in .tif format, the exhausive search becomes prohibitively expensive with a larger displacement search window in proportion to its size.
+        Yet if I keep a small displacement window [-15, 15] x [-15, 15] like I did in single scale alignment, it is likely to miss the optimal displacement vector. As a result,
+        the pyramid search algorithm was used which downscales the image, and it allows me to update the optimal displacement layer by layer. The process was fairly simple: keep
+        downscaling the image until it is less than 300 pixels (same as the size of previous .jpg images). Then starting from the coarsest scale and going down the pyramid, I compute the 
+        optimal displacement at each layer by recursively calling the single_scale_alignment function and scales up by 2 in the following layer. This process is continued until the image 
+        is in its original size.  <br><br>
+        In the following section, I display the result of my final algorithm on 12 other example images. A few images still appear to be messy, which is expected given that I used a uniform
+        and rather naive approach for all images. In particular, I think having a different feature like edge alignment or transformation like rotation can make things more interesting.
+        In the interest of time, this is all that's available for display. One last note for future work is that each image takes around 10 minutes. Although it is still in the speed of minutes,
+        a more vectorized calculation and parallelzation can help in reducing the time spent.
+    </p>
+</div>
+
+
+<div class="subheader">
+    <h2>Results on Provided Examples</h2>
+</div>
+<!-- ex 1-3 -->
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/monastery.jpg" alt="monastery" style="width:100%">
+            <figcaption>Red [2, -3], Green: [2, 3]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/tobolsk.jpg" alt="tobolsk" style="width:100%">
+            <figcaption>Red [2, 3], Green: [3, 6]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/onion_church.jpg" alt="onion_church" style="width:100%">
+            <figcaption>Red [36, 108], Green: [26, 52]</figcaption>
+        </figure>
+    </div>
+</div>
+
+<!-- ex 4-6 -->
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/lady.jpg" alt="lady" style="width:100%">
+            <figcaption>Red [34, 125], Green: [-12, 43]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/church.jpg" alt="church" style="width:100%">
+            <figcaption>Red [-4 58], Green: [4, 25]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/emir.jpg" alt="emir" style="width:100%">
+            <figcaption>Red [-286, 96], Green: [24, 49]</figcaption>
+        </figure>
+    </div>
+</div>
+
+<!-- ex 7-9 -->
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/harvesters.jpg" alt="harvesters" style="width:100%">
+            <figcaption>Red [14, 124], Green: [17, 60]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/icon.jpg" alt="icon" style="width:100%">
+            <figcaption>Red [23, 90], Green: [17, 41]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/sculpture.jpg" alt="sculpture" style="width:100%">
+            <figcaption>Red [-27, 140], Green: [-11, 33]</figcaption>
+        </figure>
+    </div>
+</div>
+
+<!-- ex 7-9 -->
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/self_portrait.jpg" alt="self_portrait" style="width:100%">
+            <figcaption>Red [37, 176], Green: [29, 79]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/three_generations.jpg" alt="three_generations" style="width:100%">
+            <figcaption>Red [11, 112], Green: [14, 53]</figcaption>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/train.jpg" alt="train" style="width:100%">
+            <figcaption>Red [32, 87], Green: [6, 42]</figcaption>
+        </figure>
+    </div>
+</div>
+
 
 </body>
 </html>
