@@ -92,7 +92,9 @@
 <div class="content">
     Using the simple finite difference as the filter in the x and y directions, I compute the partial derivative 
     in x and y of the cameraman image by convolving the image with finite difference operators D_x = [-1, 1] and 
-    D_y = [1, -1]^T. Then I compute the gradient magnitude image as well as its binarized form for an edge image.
+    D_y = [1, -1]^T using scipy.signal.convolve2d with mode='same' to ensure the dimension stay matched. Then I 
+    compute the gradient magnitude image with $np.sqrt(partial_x**2 + partial_y**2)$ as well as its binarized form 
+    for an edge image. With some trial and error, I decided to use a threshold of 0.3.
 </div>
 <div class="full">
     <figure>
