@@ -1,1 +1,370 @@
-project2
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 2: Fun with Filters and Frequencies</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0px;
+            padding: 0;
+        }
+        header {
+            background-color: #21b32d;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .subheader {
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .content {
+            font-size: large;
+            line-height: 1.5;
+            padding: 20px;
+            text-align: left;
+            margin: 10px 150px 10px;
+        }
+        .p {
+            margin: 10px 150px 10px;
+        }
+        .content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .column {
+          float: left;
+          width: 33.1%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row {
+            margin: 10px 150px 25px;
+        }
+        .column2 {
+          float: left;
+          width: 40%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row2::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row2 {
+            margin: 10px 150px 25px;
+        }
+        /* Centered caption*/
+        figure {
+          text-align: center; 
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Project 2: Fun with Filters and Frequencies</h1>
+</header>
+
+    
+<div class="subheader">
+    <h2>Background</h2>
+</div>
+<div class="content">
+    <p> As straight forward as it is, this project explores image processing with filters and frequencies! 
+    </p>
+</div>
+
+    
+<div class="subheader">
+    <h2>1.1 Finite Difference Operator</h2>
+</div>
+<div class="content">
+    Using the simple finite difference as the filter in the x and y directions, I compute the partial derivative 
+    in x and y of the cameraman image by convolving the image with finite difference operators D_x = [-1, 1] and 
+    D_y = [1, -1]^T. Then I compute the gradient magnitude image as well as its binarized form for an edge image.
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.1a.png" style="width:100%">
+    </figure> 
+</div>
+
+<div class="single"></div>
+    <figure>
+        <img src="./media/1.1b.png" style="width:30%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>1.2 Derivative of Gaussian (DoG) Filter</h2>
+</div>
+
+<div class="content">
+    <p>
+        The result from a simple finite difference operator is rather noisy with all the non-continuous ticks. There are two
+        approaches to enhance the result which leads to the same result (theoretically). The idea is that convolution is associative,
+        thus it does the same job whether we convolve twice or just use the derivative of Gaussian as the filter.
+        <ol>
+            <li>Blur the image with a Gaussian filter before applying finite difference operator</li>
+            <li>Apply finite difference operator on Gaussian filter, then convolve the image with this derivative
+                of Gaussian (DoG) filter</li>
+          </ol>
+    </p>
+</div>
+
+<div class="content">
+    <p>
+        Method 1 Results: To obtaining the edge image, I used a threshold of 0.13. It goes without saying that the image
+        under Gaussian blurring filter has a better quality. The edges are thicker, smoother, and more clear.
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.2a.png" style="width:50%">
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.2b.png" style="width:100%">
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.2c.png" style="width:30%">
+    </figure> 
+</div>
+
+<div class="content">
+    <p>
+        Method 2 Results: In this approach, I convolved the Gaussian filter with finite difference operator first to 
+        obtain the derivative of gaussian filter (DoG). Then I applied the DoG filter to the original image directly,
+        which leads to the same result other than some minor noise likely due to the paramaters used in scipy.signal.convolve2d
+        and the size of gaussian filter. I would say they are essentially the same and there are no practically difference
+        at least in this example.
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.2d.png" style="width:50%">
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.2e.png" style="width:100%">
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.2f.png" style="width:30%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>2.1 Image Sharpening</h2>
+</div>
+<div class="content">
+    <p>
+        I use a low pass and a high pass filter to retains only the low and high frequencies respectively. With these two filters,
+        I am able to combine this into a single convolution operation which is called the unsharp mask filter. The intuition is
+        simple: we can add a some more high frequencies to the image to make it looks sharper, where the strength is determine by alpha.
+        <br><br>
+        The very last image in this subsection explores a different approach in attempt to evaluate this sharpening method. I first
+        blurred the image with a classic gaussian filter before applying the unsharp mask filter. The result of the sharpened blurred
+        image is better than blurred image but not as good as the original overall. This is expected because the high frequencies are added
+        to the edges, and blurring can remove some of small edges that are not recoverable by the unsharp mask filter.
+    </p>
+</div>
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.1a.png" style="width:100%">
+    </figure> 
+</div>
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.1b.png" style="width:100%">
+    </figure> 
+</div>
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.1c.png" style="width:100%">
+    </figure> 
+</div>
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.1d.png" style="width:100%">
+    </figure> 
+</div>
+
+
+
+<div class="subheader">
+    <h2>2.2: Hybrid Images</h2>
+</div>
+<div class="content">
+    <p>
+        Background: Hybrid images are static images that change in interpretation as a function of the viewing distance. 
+        The idea is that high frequency tends to dominate perception when it is available, but, at a distance, only the 
+        low frequency part of the signal can be seen. By blending the high frequency portion of one image with the low-frequency
+        portion of another image, we can obtain a hybrid image that leads to different interpretations at different distances.
+        <br><br>
+        The left two images Nutmeg and Derek are original inputs. I first rotate Nutmeg based on Derek for alignment since it 
+        affects the perceptual grouping. Next, I convert the aligned images to gray scale before blending for hybrid image. Finally,
+        I attempt to blend each channels separately and put them back together for a colored hybrid image.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.2a.png" style="width:100%">
+    </figure> 
+</div>
+
+
+<div class="content">
+    <p>
+        I try to apply the same technique to images below. Initially, I thought the merge will go well since there are no alignment needed
+        and the only difference is the season. However, the simple implementation <b>fail</b> in this case. I suspect it is because the images 
+        don't have a single "main subject" and the image is too big. There are too many signals and therefore noise in the original image.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.2b.png" style="width:100%">
+    </figure> 
+</div>
+
+
+<div class="content">
+    <p>
+        Below, I try to hybrid emoji's with different emotions. It was inspired by the suggestion: change of expression. However, the result
+        was not ideal. When look from afar, low frequency image dominate which is desired. However, when looking closely at the hybrid image, 
+        I can see the high frequencies component but the low frequencies also stands out. This is likely due to the minimal high frequency signals
+        in emoji.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.2c.png" style="width:100%">
+    </figure> 
+</div>
+
+
+<div class="content">
+    <p>
+        Lastly, I tried to blend two game characters that have similar appearance, and I am quite happy with the result.
+        In fact, this is what I perceived to be the best result out of the three attempts here. I also provide a quick
+        frequency analysis with respect to this result.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.2d.png" style="width:100%">
+    </figure> 
+</div>
+
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.2e.png" style="width:100%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>2.3: Gaussian and Laplacian Stacks</h2>
+</div>
+<div class="content">
+    <p>
+        In the figures below, I implement both Gaussian and Laplacian stack to the Apple and Orange, where min-max normalization is
+        applied to Laplacian stack for visualization.
+    </p>
+</div>
+
+
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.3a.png" style="width:100%">
+    </figure> 
+</div>
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.3b.png" style="width:100%">
+    </figure> 
+</div>
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.3c.png" style="width:100%">
+    </figure> 
+</div>
+<div class="full"></div>
+    <figure>
+        <img src="./media/2.3d.png" style="width:100%">
+    </figure> 
+</div>
+
+<div class="content">
+    <p>
+        Replication of Figure 3.42 at different levels of the Normalized Laplacian Stack. It goes from level 0, 2, 4 to collapse Oraple.
+        The middle strip in each individual fruit is due to a small blending window, which I choose to be the middle 16% of the image.
+        One can always extend to a larger window based on need.
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/2.3e.png" style="width:70%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>2.4: Multiresolution Blending</h2>
+</div>
+<div class="content">
+    <p>
+        For the same type of masking, I reused a failure example in merging section. It appears to be a perfect example in blending!
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.4a.png" style="width:70%">
+    </figure> 
+</div>
+
+
+<div class="content">
+    <p>
+        Next, I try a circular mask, which didn't work in the way I expected. The mask function can definitely be improved instead of 
+        using the default binary circular mask from the cv2 library.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.4b.png" style="width:70%">
+    </figure> 
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.4c.png" style="width:70%">
+    </figure> 
+</div>
+
+
+</body>
+</html>
