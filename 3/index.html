@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 3: Face Morphing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0px;
+            padding: 0;
+        }
+        header {
+            background-color: #21b32d;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .subheader {
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .content {
+            font-size: large;
+            line-height: 1.5;
+            padding: 20px;
+            text-align: left;
+            margin: 10px 150px 10px;
+        }
+        .p {
+            margin: 10px 150px 10px;
+        }
+        .content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .column {
+          float: left;
+          width: 33.1%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row {
+            margin: 10px 150px 25px;
+        }
+        .column2 {
+          float: left;
+          width: 40%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row2::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row2 {
+            margin: 10px 150px 25px;
+        }
+        /* Centered caption*/
+        figure {
+          text-align: center; 
+        }
+
+        ol {
+          counter-reset: item
+        }
+        li {
+          display: block
+        }
+        li:before {
+          content: counters(item, ".") " ";
+          counter-increment: item
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Project 3: Face Morphing</h1>
+</header>
+
+    
+<div class="subheader">
+    <h2>Overview</h2>
+</div>
+<div class="content">
+    <p> In this project, I will perform a morph animation of my face to George's face. With manually defined correspondence between 
+        images, I can use Delaunay triangulation, inverse affine transformation, and cross disolve for warping. I also compute 
+        the mean of a population of faces and extrapolate from a population mean to create a caricature of myself.
+    </p>
+</div>
+
+    
+<div class="subheader">
+    <h2>Part 1: Defining Correspondences</h2>
+</div>
+<div class="content">
+    Using <a href = "https://cal-cs180.github.io/fa23/hw/proj3/george_small.jpg">George</a>'s image as the base image, I took an image of myself in a similar position. Then I cropped and rescaled my image to
+    have the same dimension as George's image. Next, I used the <a href="https://cal-cs180.github.io/fa23/hw/proj3/tool.html"> online 
+    tool </a> to select ~40 correspondence points for each image. Finally, I used <code>scipy.spatial.Delaunay</code> to generate a Delaunay 
+    triangulation for each images as well as the midway image.
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.1.png" style="width:80%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>Part 2: Computing the "Mid-way Face"</h2>
+</div>
+<div class="content">
+    Before computing the whole morph sequence, I computed the mid-way face between George and I. I wrote a class
+    that takes in correspondence coordinates, an image of Geroge, and an image of myself to perform midface calculation.
+    <ol>
+        <li>Compute the midway shape (mean of the two sets of correspondence points)</li>
+        <li>For each Delaunay triangle</li>
+            <ol>
+                <li>Compute the inverse affine warping matrix from the midway image to the source image to avoid black holes after transformation</li>
+                <li>Inverse warp all points in the triangle with <code>skimage.draw.polygon</code> to obtain the location after warped</li>
+                <li>Obtain the color values from interpolation utilizing the function <code>scipy.interpolate.griddata</code> (griddata takes the most time, took me ~30 second for mid image computation)</li>
+            </ol>
+         <li>Cross-dissolve the color by averaging the warped images</li>   
+      </ol>
+
+      Note that the initial mid-way face has some shirt overlays. The shirt overlays and blurring are due to 
+      imperfect alignment between my image and George's. Since the focus of this project is face morphing, 
+      I decided that this minor issue can be overlooked at this stage.
+      
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.1.png" style="width:100%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>Part 3. The Morph Sequence</h2>
+</div>
+<div class="content">
+    To compute the morph sequences to be used in a gif, I made a subclass based on part 2.
+    Images 'george' and 'owen' are first warped into an intermediate shape configuration controlled by warp fraction, 
+    and then the results are cross-dissolved according to dissolve fraction. I decided to let both parameters lie in 
+    the range [0,1] and used <code>np.linspace(0, 1, 60)</code> for morph sequence with 60 frames and with a fps of 35.
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/morph.gif" style="width:20%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>Part 4. The "Mean face" of a population</h2>
+</div>
+
+<div class="content">
+    <p>
+        In this part, I chosed a <a href="https://web.archive.org/web/20070613075740/http://www2.imm.dtu.dk/~aam/datasets/datasets.html">freely 
+        available dataset</a> of annotated faces that consists of 37 Danish face Images
+        (30 males, 7 females). In particular, I selected a subset of population (all 30 males) for my mean face analysis.
+        With the keypoints already annotated on the data, I performed the following steps:
+        <ol>
+            <li>Compute the average face shape by taking the average of the keypoints (same as my correspondence points in part 1) </li>
+            <li>Morph each of the faces in the dataset into the average shape. </li>
+            <li>Compute the average face of the population by cross dissolving the morphed faces. </li>
+            <li>Lastly, I warp my face into the average geometry and vice versa. </li>
+        </ol>
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/4.1.png" style="width:100%">
+    </figure>
+    <figure>
+        <img src="./media/4.2.png" style="width:80%">
+    </figure>
+    <figure>
+        <img src="./media/4.3.png" style="width:100%">
+    </figure>
+</div>
+
+
+<div class="subheader">
+    <h2>Part 5. Caricatures- Extrapolating from the mean</h2>
+</div>
+<div class="content">
+    To produce a caricature of your face, I used the population mean in part 4 (average danish male face) and 
+    extrapolate from the population mean. Mathematically, it is simply achieved by choosing a warp fraction 
+    in part 3 to be outside of the normal [0, 1] range. In my examples, I used a warp fraction of 1.5 to look
+    "more Danish" and a warp fraction of -0.5 to look "less Danish". Although the result is somewhat weird, 
+    one of my observation is that Danish male tend to have a smaller eyes. [Disclaimer: may not be true, could
+    have been a result from how I choose my correspondence points etc.]
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/5.1.png" style="width:70%">
+    </figure> 
+</div>
+
+
+
+<div class="subheader">
+    <h2>Part 6. Bells and Whistles</h2>
+</div>
+<div class="content">
+    For Bells and Whistles, I decided to use the same Dane dataset but this time with a subpopulation of all danish females
+    in the dataset. In particular, I want to change the gender of my face by morphing into the average danish female face.
+    The outputs below demonstrate 3 types of morphing (dissolve fraction = 0.5):
+    <ol>
+        <li>Morphing just the shape: Warp my face into the average danish female face</li>
+        <li>Morphing just the appearance: Warp the average danish female face into my face and cross-dissolve</li>
+        <li>Morphing both the shape and the appearance: Take the shape morph image of my self and cross-dissolve with 
+            the original average danish female face.
+        </li>
+    </ol>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/6.1.png" style="width:70%">
+    </figure> 
+    <figure>
+        <img src="./media/6.2.png" style="width:90%">
+    </figure> 
+</div>
+
+
+</body>
+</html>
