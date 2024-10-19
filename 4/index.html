@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 4: Image Warping and Mosaicing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0px;
+            padding: 0;
+        }
+        header {
+            background-color: #21b32d;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .subheader {
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .content {
+            font-size: large;
+            line-height: 1.5;
+            padding: 20px;
+            text-align: left;
+            margin: 10px 150px 10px;
+        }
+        .p {
+            margin: 10px 150px 10px;
+        }
+        .content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .column {
+          float: left;
+          width: 33.1%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row {
+            margin: 10px 150px 25px;
+        }
+        .column2 {
+          float: left;
+          width: 40%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row2::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row2 {
+            margin: 10px 150px 25px;
+        }
+        /* Centered caption*/
+        figure {
+          text-align: center; 
+        }
+
+        ol {
+          counter-reset: item
+        }
+        li {
+          display: block
+        }
+        li:before {
+          content: counters(item, ".") " ";
+          counter-increment: item
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Project 4: Image Warping and Mosaicing</h1>
+</header>
+
+    
+<div class="subheader">
+    <h2>Overview</h2>
+</div>
+<div class="content">
+    <p> The goal of this project is to make a panorama manually from multiple images captured from the same center of projection.
+        This involves building an image mosaic by registering, projective warping, resampling, and compositing.
+        Starting by shooting my own photographs, I first recover the homography between images and warped them accordingly
+        onto a common projection plane. As a byproduct of this step, the homography matrix also enabled me to rectify any known 
+        rectangular objects. Finally, the warped images were blended on the shared projection plane to produce the final mosaic.<br><br>
+        Disclaimer: I downsized all the images to make the selection of correspondence points easier. This causes some of the images
+        to be blurry, but it doesn't affect the warping and mosaicing process!
+    </p>
+</div>
+
+    
+<div class="subheader">
+    <h2>Part 1: Shoot and Digitize Pictures</h2>
+</div>
+<div class="content">
+    I shoot multiple photographs such that the transformation between them are projective. This is achieved by fixing the center
+    of projection(camera) and rotate my body while capturing photos. In particular, I used zoomed out setting(x0.5) on the first example, hoping it will make
+    the mosaic more interesting. Additionally, the photos are shoot close in time to avoid changes in lighting, and the fields of view
+    are significantly overlapped to make the registration easier.
+</div>
+
+<div class="subheader">
+    <h2>Part 2: Recover Homographies</h2>
+</div>
+<div class="content">
+<p>
+    Homography is a projective transformation such that from a single point (x, y) to (x', y'):
+    \[
+    \begin{bmatrix}
+      a & b & c \\
+      d & e & f \\
+      g & h & 1
+    \end{bmatrix}
+    \begin{bmatrix}
+      x \\
+      y \\
+      1
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+      wx' \\
+      wy' \\
+      w
+    \end{bmatrix}
+    \]
+</p>
+If we expand the matrix multiplication into systems of equation, this can be simplified to the following matrix operation:
+<p>
+    \[
+    \begin{bmatrix}
+      x & y & 1 & 0 & 0 & 0 & -xx' & -yx' \\
+      0 & 0 & 0 & x & y & 1 & -xy' & -yy'
+    \end{bmatrix}
+    \begin{bmatrix}
+      a \\
+      b \\
+      c \\
+      d \\
+      e \\
+      f \\
+      g \\
+      h
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+      x' \\
+      y'
+    \end{bmatrix}
+    \]
+</p>
+
+Given n correspondence points, it give us 2n many equations and 8 unknowns. This is an overconstrained system and can be solved
+with least squares. I choose the naive solution <code>'np.linalg.lstsq()'</code> to find the parameters and the result is quite reasonable
+(given the output of my warped images).
+</div>
+
+<div class="subheader">
+    <h2>Part 3. Warp the Images</h2>
+</div>
+<div class="content">
+    Given the homography matrix H, I used the inverse warping to avoid random holes in the warped image. First, I apply forward warping
+    homography to the four corners to obtain the boundary of the warped image. With <code>'skimage.draw.polygon'</code>, it gives 
+    me all the pixels that lies within the boundary. Then I apply inverse warping homography which maps all the points back to the 
+    source image. To avoid potential aliasing in the resampling process, <code>'scipy.interpolate.griddata'</code> is used to 
+    obtain the corresponding RGB channels. In between the processes, I apply translation to keep all points positive and make sure
+    that the function runs smoothly
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/3.1.png" style="width:90%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>Part 4. Image Rectification</h2>
+</div>
+
+<div class="content">
+    <p>
+        In this section, I take a photo that contains a rubik's cube and a photo that contains a laptop. Both photos contain 
+        a known rectangular objects, and my goal is to make them rectangular using a homography. The distinction compare 
+        to the previous section is that I only have one image to work with this time, and the correspondence points can not 
+        be draw so easily. The trick turns out to be pretty simple, I define the correspondences using what I know about the 
+        rectangular object. For instance, if I want to rectify the rubik's cube, then I know a priori that it is a square, 
+        I can arbitrarily define the correspondence to [0, 0], [0, 200], [200, 0], [200, 200] 
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/4.1.png" style="width:60%">
+    </figure>
+    <figure>
+        <img src="./media/4.2.png" style="width:60%">
+    </figure>
+</div>
+
+
+<div class="subheader">
+    <h2>Part 5. Blend the images into a mosaic</h2>
+</div>
+<div class="content">
+    With all the preparations complete, I can now align the images and blend them into a mosaic. The figure below showcases 
+    one set of source images alongside their corresponding warped forms.
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/5.1.png" style="width:100%">
+    </figure> 
+</div>
+
+
+<div class="content">
+    The first problem is alignment. Since the warped image is a translation of the source image, I manage to find the shifts
+    in both x and y direction and pad them to my images appropriately. Next, I find the area of intersection and apply
+    simple alpha average by setting alpha = 0.5. From the output mosaics, everything seems to be fine except on the edges of 
+    intersection. This naive blending yields the result below. Note that the border artifact between im0 and im1 is much more 
+    obstrude. This is because im1 and im2 are taking under a similar lighting setting, and im0 are taken facing the sunlight.
+    I would imagine that my phone camera automatically adjust some settings such as exposure that cause those differences.
+
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/5.2.png" style="width:50%">
+        <img src="./media/5.3.png" style="width:70%">
+    </figure> 
+</div>
+
+
+<div class="content">
+    To mitigate edges, I applied a gradient mask that adjusts values based on the distance transform.
+    With <code>'scipy.ndimage.distance_transform_edt'</code>, I was able to get the distance of each pixel to the border automatically.
+    Then I normalized the intersection mask such that the highest value is set to one and use it as an alpha mask for my
+    blending process. The result is quite amazing as shown below. I should also mention that the result is not perfect, likely due
+    to numerical imprecision and integer rounding in my alignment stage. Also, the image is rather small in the middle because
+    I took the photos with 0.5x zoom.
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/5.4.png" style="width:70%">
+    </figure> 
+</div>
+
+<div class="content">
+    The figures below showcase two other examples of image mosaic :) <br>
+    One attempt uses photos taken within a video game, ignoring user interface at the bottom, I think the screenshots blend pretty well!
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/5.5.png" style="width:50%">
+        <img src="./media/5.6.png" style="width:60%">
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/5.7.png" style="width:50%">
+        <img src="./media/5.8.png" style="width:60%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>Bells and Whistles: Fake Projection </h2>
+</div>
+<div class="content">
+    I took a step further and attempt to project an among us figure onto the Berkeley tower!
+    Procedurally, it is very similar to rectification but warped to a different perspective.
+    The additional steps are the creation of a mask based on the white background and alignment to the tower.
+    I performed a simple addition at the end, and the result gives the impression that the figure is being 
+    projected onto the tower just like an actual projector would!
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/b&w1.png" style="width:90%">
+        <img src="./media/b&w2.png" style="width:50%">
+    </figure> 
+</div>
+
+</body>
+</html>
