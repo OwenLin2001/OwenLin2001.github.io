@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bridging Reality and Perception with Image Transformations in Anamorphic Art</title>
+    <title>Project 5: Fun With Diffusion Models!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,33 +51,7 @@
             width: 80%;
             height: auto; /* Maintain aspect ratio */
         }
-        .image-gallery {
-            display: flex;
-            justify-content: center;
-            gap: 20px; 
-        }
-        .image-gallery img {
-            width: 100%; 
-            height: auto; 
-            display: block;
-        }
 
-        .image-container {
-            display: flex;
-            flex-wrap: wrap;
-            text-align: center;
-            width: 100%;
-            gap: 5px;
-        }
-        .image-container img {
-            width: 100%;
-            height: auto;
-            border-radius: 8px;
-        }
-        .image-container figcaption {
-            margin-top: 5px;
-            font-style: italic;
-        }
         figcaption {
             margin-top: 10px;
             font-weight: bold;
@@ -98,195 +72,47 @@
         .row {
             margin: 10px 150px 25px;
         }
-        video {
-            border-radius: 8px;     /* Optional rounded corners */
-        }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 
 <header>
-    <h1>Bridging Reality and Perception with Image Transformations in Anamorphic Art</h1>
+    <h1>Project 5: Fun with Diffusion Models!</h1>
 </header>
 
     
 <div class="subheader">
-    <h2>Part I: Morphing Structure Out of Background</h2>
+    <h2>Part A Overview: The Power of Diffusion Models!</h2>
 </div>
 <div class="content">
-    <p> 
-        Before turning a 2D to a 3D, we aim to morph a pile of pixel into something that has shape, 
-        and then into something that has both texture and shape. To do so, I interpolate color from the rest of the image
-        onto the object and reverse the process to mimic the transformation from background to object.
+    <p> In the first part of this project, I will deploy diffusion models for image generation and denoising. I am
+        going to use the DeepFloydIF diffusion model, a two stage model trained by Stability AI. It was trained as a text-to-image model,
+        thus a text encoder (T5EncoderModel) is used to compute a couple of text embeddings such as 'an oil painting of an old man' for
+        conditional generation or 'a high quality photo' for an unconditional generation.
+
     </p>
 </div>
 
-<div class="image-gallery">
-    <figure class="imge-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre1.jpg">
-        <figcaption>The Original Image</figcaption>
-    </figure>
-    <figure class="image-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre2.png">
-        <figcaption>Inpaint From Around + Gaussian Blurred</figcaption>
-    </figure> 
-</div>
-
-<div class="content">
-    <p> 
-        The first step is to erase the object form the image, this could easily be done using inpaint and Gaussian blur, 
-        while there are still some artifacts (like the diagonal line due to inpainting), it is acceacptable as the object
-        is no longer recognizable at first glance. However, simple reducing the inpaint or Gaussian blur intensity does not
-        do the trick of reversing the cube back into object, there are two problems: the physical shape is decomposed under inpainting
-        and illumination also looks weird, to address those two problems, I found a method called adaptive region sampling.
-    </p>
-</div>
-
-<div class="image-gallery">
-    <figure class="imge-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre3.png">
-        <figcaption>Step 1: Manual Annotatation</figcaption>
-    </figure>
-    <figure class="image-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre4.png">
-        <figcaption>Step 2: Finding the Visible Surface</figcaption>
-    </figure> 
-    <figure class="image-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre5.png">
-        <figcaption>Step 3: Extend the Edge Between Surface</figcaption>
-    </figure> 
-    <figure class="image-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre6.png">
-        <figcaption>Step 4: Use the Boundary Found to Segment Image Into Three Regions</figcaption>
-    </figure> 
-</div>
-
-<div class="content">
-    <p> 
-        Step1: The process of this adaptive region sampling is as shown above, we first manually find the corner of the object,
-        This process cannot be done using Harris Corner detection since the only corner
-        we are looking for is the corner of our object, Harris would detect other corners in the image 
-    </p>
-    <p> 
-        Step2: Using the manually annotated corners, we could get the visible surface, we would use this information
-        to reconstruct the physical structure of the object
-    </p>
-    <p> 
-        Step3: We extend the edge between the visible surfaces to make them touch the edge of the image.
-        Those extended lines would help us segment the image
-    </p>
-    <p> 
-        Step4: Using the boundary we found in Step3, we could segment our image into separate regions.
-    </p>
-</div>
-
-<div class="image-gallery">
-    <figure class="imge-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre7.png">
-        <figcaption>The Region to Sample for 'Orange Surface' Shown in step 2</figcaption>
-    </figure>
-    <figure class="image-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre8.png">
-        <figcaption>One Example Sample from the Aforementioned Region</figcaption>
-    </figure> 
-    <figure class="image-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre9.png">
-        <figcaption>Interpolated 'Orange Surface' From Multiple Samples</figcaption>
-    </figure> 
-    <figure class="image-container" style="width: 300px; height: 450px;">
-        <img src="./media/pre10.png">
-        <figcaption>Fully Interpolated Object on a=0.3</figcaption>
-    </figure> 
-</div>
-
-
-<div class="content">
-    <p> 
-        After finish the four steps above, we have the location of the visible surfaces and their corresponding selection regions.
-        We could then sample a patch the same shape as the surface within the region to interpolate onto the target surface.
-    </p>
-    <p> 
-        As shown in the example for 'orange surface' above, we do the sampling multiple times (I used 4-8 in my code),
-        average the color for each pixel location, and blend it with the pixel of the target surface with a proportion alpha.
-    </p>
-    <p> 
-        This method address the two issues we had before, since we are only sampling in a region that has similar illumination
-        as our target surface, the result after blending is going to look nice illumination-wise. Since we reserved the physical
-        structure of visible surface, as blending level become lower, the original object's physical strucure would become more and more clear.
-    </p>
-    <p> 
-        Looking at the a=0.3 midway morphing image, we could see that the texture of the object is similar to the environment, 
-        the upper surface looks like the tissue box and the left surface looks like the wood table.
-        The illumination looks correct, the right surface appear to be darker than the left surface.
-        The physical structure of the object is also identifiable, only a little vague.
-        This shows that our sampling method works!
-    </p>
-</div>
-
-<div class="full">
-    <figure>
-        <img src="./media/transform.png" style="width:70%">
-    </figure> 
-    <figure>
-        <img src="./media/output.gif" style="width:10%">
-        <figcaption>The Final Morphing Sequence</figcaption>
-    </figure> 
-</div>
-
-<div class="content">
-    <p> 
-        Using the method above, we could adjust alpha level and produce a sequence of frames as above! 
-    </p>
-    <p> 
-        With the 'morphed from background' object as the starting point, we could start to implement the rotation that
-        rotates it into 3D!
-    </p>
-</div>
     
 <div class="subheader">
-    <h2>Preliminary: Shoot and Digitize Video</h2>
+    <h2>1.1: Implementing the Forward Process</h2>
 </div>
 <div class="content">
-    We recorded a short video of a Rubik's Cube with a moving camera. The shoot spans approximately 180 degrees, and the video was taken
-    with flashlight turned on to minimize the shadow effect (although the result were not as effective as anticipated). Here
-    are the video that were used as input in this project.
-</div>
-
-<div class="row">
-    <div class="column">
-        <figure>
-            <video width="450" controls>
-                <source src="./media/input_vid1.mp4" type="video/mp4">
-            </video>
-        </figure>
-    </div>
-    <div class="column">
-        <figure>
-            <video width="450" controls>
-                <source src="./media/input_vid2.mp4" type="video/mp4">
-            </video>
-        </figure>
-    </div>
-</div>
-
-
-<div class="subheader">
-    <h2>Detecting Corner Features</h2>
-</div>
-<div class="content">
-    We will start with harris interest point detector to automatically detect corners (inherently good correspondence choice).
-    While the math and algorithm is not trivial, I utilize <Code>skimage.feature.corner_harris</Code> for naive implementation.
-    Here is a generic algorithm in Harris detector behind the scene:
-    <ol>
-        <li>Compute Gaussian derivatives at each pixel
-        <li>Compute second moment 2x2 matrix M in a Gaussian window around each pixel</li>
-        <li>Compute corner response function f: \[f(x_i) = \frac{det(M)}{Trace(M)} = \frac{\lambda_1\lambda_2}{\lambda_1 + \lambda_2}\]</li>
-        <li>Threshold f</li>
-    </ol>
-    However, the raw output returns more than 45000 corners, which would have cover my entire image if I were to plot it on a figure!
-    Instead, I apply the Percentile Filter and filter to corners with an h value above 99% percentile.<br>
-    This is only for visualization because the next subsection in Adaptive Non-Maximal Suppression will sifted out most of them.
+    In the forward process, we take a clean image and adds noise to it. mathematically, it is defined by
+    <p>
+    \[
+    q(x_t \mid x_0) = \mathcal{N}(x_t; \sqrt{\bar{\alpha}_t} x_0, (1 - \bar{\alpha}_t) \mathbf{I})
+    \]
+    
+    \[
+    x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon \quad \text{where} \quad \epsilon \sim \mathcal{N}(0, 1)
+    \]
+    Given a clean image \( x_0 \), we get a noisy image \( x_t \) at timestep \( t \) by sampling from a Gaussian 
+    with mean \( \sqrt{\bar{\alpha}_t} x_0 \) and variance \( (1 - \bar{\alpha}_t) \). <br>
+    For the DeepFloyd models, T = 1000.
+    </p>
 </div>
 <div class="full">
     <figure>
@@ -294,160 +120,721 @@
     </figure> 
 </div>
 
-
 <div class="subheader">
-    <h2>Mask Segmentation with SAM </h2>
+    <h2>1.2: Classical Denoising</h2>
 </div>
 <div class="content">
-    Segment Anything Model (SAM) is an advanced Segmentation Model developed by Meta. The <Code>AutomaticMaskGenerator</Code> 
-    provides masks without labeling. Due to time constraint, we did not implement semantic segmentation for automatic labeling.
-    Instead, bounding box and <Code>SamPredictor</Code> were used to obtain a mask for the object and a mask for the floor.
-
+In previous projects, we used Gaussian blur filtering to try to remove the noise. Let's see the performance of such classical methods.
+We should expect bad results with so many noise added to the image.
 </div>
 <div class="full">
     <figure>
-        <img src="./media/mask.png" style="width:70%">
-    </figure> 
-</div>
-
-
-<div class="subheader">
-    <h2>Enhance Feature Selection: Adaptive Non-Maximal Suppression (ANMS)</h2>
-</div>
-<div class="content">
-Now we have a way to detect features just on the floor surface, we also want some good properties among the features! In particular, we want:
-<ul>
-    <li>Fixed number of features per image</li>
-    <li>Spatially evenly distributed features</li>
-</ul>
-This motivates Adaptive Non-Maximal Suppression (ANMS), where I find the minimum suppression radius r<sub>i</sub> for each features.
-Then 100 features with highest suppression radius are selected as the final subset. The idea of minimum suppression radius can be summarized 
-in one phrase as "a distance to the nearest stronger keypoint." :)<br>
-The mathematical definition for the minimum suppression radius is \[ r_i = \min_j \, \lvert \mathbf{x}_i - \mathbf{x}_j \rvert, \quad 
-\text{s.t.} \quad f(\mathbf{x}_i) < c_{\text{robust}} f(\mathbf{x}_j) \]
-where x<sub>i</sub>, x<sub>j</sub> are corner features, and f(x<sub>i</sub>), f(x<sub>j</sub>) are response values from harris corner.<br><br>
-I picked the same c<sub>robust</sub> = 0.9 as in the paper to ensures that a neighbor must have significantly higher strength. <br>
-In the figure below, two arbitrary frames are choosen where I selected the top 100 features with desired properties.
-</div>
-
-<div class="full">
-    <figure>
-        <img src="./media/sample_ANMS.png" style="width:70%">
-    </figure> 
-</div>
-
-
-
-
-<div class="subheader">
-    <h2>Feature Descriptor</h2>
-</div>
-<div class="content">
-    Given all the corner features, we need to somehow describe the feature with feature descriptors.
-    With rotation and perspective distortion factors involved, we implement Scale Invariant Feature Transform (SIFT) descriptor.
-    It utilizes gradient field around a feature:
-    <ol>
-        <li>Divide the bigger patch into 16 smaller image patches</li>
-        <li>For each small image patch, generate a histogram of eight gradient orientations</li>
-        <li>Stack the 16 patches and obtained a 8*16 = 128 feature descriptor vector (after flattening)</li>
-    </ol>
-    The figure below shows the mechanism behind SIFT.
-</div>
-
-<div class="full">
-    <figure>
-        <img src="./media/sift.jpg" style="width:40%">
-    </figure> 
-</div>
-
-
-<div class="subheader">
-    <h2>Feature Matching</h2>
-</div>
-<div class="content">
-    Lastly, I will need to find pairs of features that look similar.
-    This is acheived by first flatten feature descriptors into vectors of length 8x16 = 128. Then I can compute the l<sub>2</sub> norm among all combinations
-    between the two images to find the nearest neighbor. <br><br>
-    Yet the issue is that if only
-    one neighbor is used, two patches can be similar by chance or due to noise. Here, I apply Lowe's trick and compute the 
-    <b>ratio between L2 of the closest match and the L2 of the second-closest match</b>.
-    The idea is that if the ratio is small, then there is only one good match between the two features, which makes it more likely to be
-    a true match!<br><br>
-    With some empirical testing, a Lowe's ratio of 0.55 is used in this project
-    <br><br>
-
-    The figure below demonstrates the result after apply Lowe's trick. Points labels in blue are recognized as good matching features.
-</div>
-
-<div class="full">
-    <figure>
-        <img src="./media/sample_LOWE.png" style="width:70%">
+        <img src="./media/1.2.png" style="width:70%">
     </figure> 
 </div>
 
 <div class="subheader">
-    <h2>Random Sample Consensus (RANSAC)</h2>
+    <h2>1.3: One-Step Denoising</h2>
 </div>
-<div class="content">
-    With appropriate thresholding, Lowe's trick helps us to remove most of the outliers. However, the algorithm never guarentees that
-    it will only return true matches. This is where RANSAC comes in, which automatically find the correct homography based on the
-    set of good matches returned in feature matching section. It does so by filtering out the outliers and keep the largest set of
-    inliers. The algorithm proceeds as follows:
-    <ol>
-        <li>For some large n
-            <ol>
-                <li>Select four feature pairs at random</li>
-                <li>Compute the exact homography <b>H</b></li>
-                <li>Compute <i>inliers</i> where <i>dist</i>(<b>x<sub>j</sub></b>, <b>Hx<sub>i</sub></b>) &lt; ε</li>
-                <li>Keep largest set of inliers</li>
-            </ol>
-        </li>
-        <li>Re-compute least-squares <b>H</b> estimate on all of the inliers</li>
-    </ol>
-    In the first stage, the homography is found on consecutive frames. <br>
-    Then we compute cumulative homographies using the composition property. 
-    i.e. if H12 warp 1 to 2, H23 warp 2 to 3, then H13 = H23@H12 warp 1 to 3.
-</div>
-
-<div class="subheader">
-    <h2>Warp to anamorphic illusion!</h2>
-</div>
-
 <div class="content">
     <p>
-        In previous steps, we actually computed the inverse homography. This avoids the need of splatting in forward warping
-        and <Code>Griddata</Code> is used to obtain the color value. Additionally, <Code>bwdist</Code> is used to implement
-        distance-based blending. With the weight provided by bwdist, we can create alpha mask with the formula:
-        \[
-        a_1 = \frac{w_1}{w_1+w_2}, \quad a_2 = \frac{w_2}{w_1+w_2}
-        \]
+        Now, we'll use the pretrained diffusion model to denoise. The actual denoiser is found at 
+        <code>stage_1.unet</code>. This is a U-Net that has already been trained on a 
+        very large dataset of (<em>x<sub>0</sub></em>, <em>x<sub>t</sub></em>) pairs of images. 
+        We can use it to estimate the Gaussian noise from the image. Then, we can remove this noise to recover 
+        the estimated original image.
     </p>
 </div>
 <div class="full">
     <figure>
-        <img src="./media/blending.png" style="width:50%">
+        <img src="./media/1.3.png" style="width:70%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>1.4: Iterative Denoising</h2>
+</div>
+
+<div class="content">
+    <p>
+        <p>
+            In part 1.3, we see that the denoising U-Net does a much better job of projecting the image onto the natural image manifold, but it does get worse as we add more noise. This makes sense, as the problem is much harder with more noise.
+            </p>
+            
+            <p>
+            But diffusion models are designed to denoise iteratively. In this part, we will denoise the image iteratively instead of all in one step.
+            </p>
+            
+            <p>
+            In theory, we could start with noise \( x_{1000} \) at timestep \( T = 1000 \), denoise for one step to get an estimate of \( x_{999} \), and carry on until we get \( x_0 \). But this would require running the diffusion model 1000 times, which is quite slow.
+            </p>
+            
+            <p>
+            It turns out, we can actually speed things up by skipping steps.
+            </p>
+            
+            <p>
+            To skip steps, I create a list of timesteps that called <code>strided_timesteps</code> by introducing a regular stride step of 30, which will be much shorter than the full list of 1000 timesteps. <code>strided_timesteps[0]</code> will correspond to the noisiest image (and thus the largest \( t \)) and <code>strided_timesteps[-1]</code> will correspond to a clean image (and thus \( t = 0 \)).
+            </p>
+            
+            <p>
+                
+            On the \( i \)-th denoising step we are at \( t = \text{strided_timesteps}[i] \), and want to get to \( t' = \text{strided_timesteps}[i+1] \) (from more noisy to less noisy). To actually do this, we have the following formula:
+            </p>
+            
+            <div style="text-align: center;">
+              \[
+              x_{t'} = \frac{\sqrt{\bar{\alpha}_{t'} \beta_t}}{1 - \bar{\alpha}_t} x_0 + \frac{\sqrt{\alpha_t (1 - \bar{\alpha}_{t'})}}{1 - \bar{\alpha}_t} x_t + v_\sigma
+              \]
+            </div>
+            
+            <p>
+            where:
+            <ul>
+              <li>\( x_t \) is your image at timestep \( t \).</li>
+              <li>\( x_{t'} \) is your noisy image at timestep \( t' \) where \( t' < t \) (less noisy).</li>
+              <li>\( \bar{\alpha}_t \) is defined by <code>alphas_cumprod</code>, as explained above.</li>
+              <li>\( \alpha_t = \frac{\bar{\alpha}_t}{\bar{\alpha}_{t'}} \).</li>
+              <li>\( \beta_t = 1 - \alpha_t \).</li>
+              <li>\( x_0 \) is our current estimate of the clean image</li>
+              <li>\( v_\sigma \) is random noise, which in the case of DeepFloyd is also predicted.
+            </ul>
+            </p>
+            
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.4.1.png" style="width:70%">
+    </figure>
+    <figure>
+        <img src="./media/1.4.2.png" style="width:70%">
+    </figure>
+</div>
+
+
+<div class="subheader">
+    <h2>1.5: Diffusion Model Sampling</h2>
+</div>
+<div class="content">
+    In part 1.4, we use the diffusion model to denoise an image. Another thing we can do with the iterative_denoise function is to 
+    generate images from scratch. We can do this by setting i_start = 0 and passing in random noise. This effectively denoises pure 
+    noise. Lastly, the prompt "a high quality photo" is being passed in for unconditional results.
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.5.png" style="width:70%">
     </figure> 
 </div>
 
 <div class="subheader">
-    <h2>Project Demonstration</h2>
+    <h2>1.6: Classifier Free Guidance</h2>
+</div>
+<div class="content">
+    In part 1.5, some of the generated images are not very good. To improve image quality, 
+    I use a technique called Classifier-Free Guidance which improve the iamge quality but also at the expense of image diversity.
+    <p>
+        In CFG, we compute both a noise estimate conditioned on a text prompt, and an unconditional noise estimate. 
+        We denote these \( \epsilon_c \) and \( \epsilon_u \). Then, we let our new noise estimate be:
+        </p>
+        
+        <div style="text-align: center;">
+          \[
+          \epsilon = \epsilon_u + \gamma (\epsilon_c - \epsilon_u)
+          \tag{4}
+          \]
+        </div>
+        
+        <p>
+        where \( \gamma \) controls the strength of CFG. Notice that for \( \gamma = 0 \), we get an unconditional noise estimate, 
+        and for \( \gamma = 1 \) we get the conditional noise estimate. The magic happens with extrapolation when \( \gamma > 1 \). 
+        In this case, we get much higher quality images. 
+        </p>
+        <p>
+            The image set below uses \( \gamma = 0 \).
+        </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.6.png" style="width:70%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>1.7: Image-to-image Translation</h2>
+</div>
+<div class="content">
+    In previous section, we take a real image, add noise to it, and then denoise. This effectively allows us to make edits 
+    to existing images. The more noise we add, the larger the edit will be. This works because in order to denoise an image, 
+    the diffusion model must to some extent "hallucinate" new things -- the model has to be "creative." Another way to think 
+    about it is that the denoising process "forces" a noisy image back onto the manifold of natural images.
+    <p>
+        Here, we're going to take the original Campanile image, noise it a little, and force it back onto the image manifold without 
+        any conditioning. This follows the SDEdit algorithm.
+    </p>
+    <p>
+        Here, I run the forward process to get a noisy test image at different time step, and then run the iterative_denoise_cfg
+        function using a starting index of [1, 3, 5, 7, 10, 20] time step and show the results.
+        We should expect a series of "edits" to the original image, gradually matching the original image closer and closer.
+    </p>
+    
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.7.png" style="width:85%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>1.7.1: Editing Hand-Drawn and Web Images</h2>
+</div>
+<div class="content">
+        I start with a nonrealistic image (a Minecraft skeleton) and tried to project it onto the natural image manifold with the same SDEdit algorithm.
+    <p>
+        Then I hand-drawn two images and apply the same algorithm. The outputs are provided below.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.7.1a.png" style="width:85%">
+        <img src="./media/1.7.1b.png" style="width:85%">
+        <img src="./media/1.7.1c.png" style="width:85%">
+    </figure> 
+</div>
+
+
+
+<div class="subheader">
+    <h2>1.7.2: Inpainting</h2>
+</div>
+<div class="content">
+    <p>
+        We can use the same procedure to implement inpainting. 
+        That is, given an image \( x_{\text{orig}} \), and a binary mask <b>m</b>, we can create a new image that has the same 
+        content where <b>m</b> is 0, but new content wherever <b>m</b> is 1.
+        </p>
+        
+        <p>
+        To do this, I run the same diffusion denoising loop. But at every step, after obtaining \( x_t \), we "force" \( x_t \) 
+        to have the same pixels as \( x_{\text{orig}} \) where <b>m</b> is 0, i.e.:
+        </p>
+        
+        <div style="text-align: center;">
+          \[
+          x_t \leftarrow \mathbf{m} x_t + (1 - \mathbf{m}) \, \text{forward}(x_{\text{orig}}, t)
+          \tag{5}
+          \]
+        </div>
+        
+        <p>
+        Essentially, we leave everything inside the edit mask alone, but we replace everything outside the edit mask with 
+        our original image -- with the correct amount of noise added for timestep \( t \).
+        </p>
+        <p>
+            The outputs below shows impainting on the Campanile, a chibi figure, and the multi-head dragon
+        </p>
+</div>
+
+        
+<div class="full">
+    <figure>
+        <img src="./media/1.7.2a.png" style="width:85%">
+        <img src="./media/1.7.2b.png" style="width:85%">
+        <img src="./media/1.7.2c.png" style="width:85%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>1.7.3: Text-Conditioned Image-to-image Translation</h2>
+</div>
+<div class="content">
+    <p>
+        Once again, we will implement the same algorithm but guide the projection with a text prompt.
+        </p>
+        
+        <p>
+        We expect the images gradually look more like original image, but also look like the text prompt.
+        </p>
+        <p>
+            The prompts used for the outputs below are "a rocket ship", "a pencil", and "a photo of a dog."
+        </p>
+</div>
+
+        
+<div class="full">
+    <figure>
+        <img src="./media/1.7.3a.png" style="width:85%">
+        <img src="./media/1.7.3b.png" style="width:85%">
+        <img src="./media/1.7.3c.png" style="width:85%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>1.8: Visual Anagrams</h2>
+</div>
+<div class="content">
+    <p>
+        Now I have all the tools to implement visual anagrams and create optical illusions with diffusion models. In this part, we 
+        will create an image that looks like one object but when flipped upside down will reveal another object
+        </p>
+        <p>
+        To do this, I iteratively denoise an image \( x_t \) at step \( t \) normally with prompt 1, to obtain noise
+         estimate \( \epsilon_1 \). 
+        But at the same time, we will flip \( x_t \) upside down, and denoise with prompt 2, to get noise estimate \( \epsilon_2 \). 
+        We can flip \( \epsilon_2 \) back, to make it right-side up, and average the two noise estimates. 
+        We can then perform a reverse/denoising diffusion step with the averaged noise estimate.
+        </p>
+        
+        <p>The full algorithm will be:</p>
+        
+        <div style="text-align: center;">
+            \[
+            \epsilon_1 = \text{UNet}(x_t, t, p_1)
+            \]
+            \[
+            \epsilon_2 = \text{flip}(\text{UNet}(\text{flip}(x_t), t, p_2))
+            \]
+            \[
+            \epsilon = (\epsilon_1 + \epsilon_2) / 2
+            \]
+        </div>
+        
+        <p>
+        where U-Net is the diffusion model U-Net from before, <code>flip(·)</code> is a function that flips the image, 
+        and \( p_1 \) and \( p_2 \) are two different text prompt embeddings. And our final noise estimate is \( \epsilon \). 
+        </p>
+</div>
+
+
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/1.8.1.png" style="width:100%">
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/1.8.2.png" style="width:100%">
+        </figure>
+    </div>
 </div>
 
 <div class="row">
     <div class="column">
         <figure>
-            <video width="450" controls>
-                <source src="./media/output_vid1.mp4" type="video/mp4">
-            </video>
+            <img src="./media/1.8.3.png" style="width:100%">
         </figure>
     </div>
     <div class="column">
         <figure>
-            <video width="450" controls>
-                <source src="./media/output_vid2.mp4" type="video/mp4">
-            </video>
+            <img src="./media/1.8.4.png" style="width:100%">
         </figure>
     </div>
+</div>
+
+
+
+<div class="full">
+    <figure>
+        <img src="./media/1.8.5.png" style="width:40%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>1.9: Hybrid Images</h2>
+</div>
+<div class="content">
+    <p>The same idea in section 1.8 can be applied to generate hybrid images. 
+       This is called Factorized Diffusion, which genreate a image that looks like one object but when seen from a distance 
+       will reveal another object
+    </p>
+
+    <p>I create a composite noise estimate \( \epsilon \), by estimating the noise with two different text prompts, and then 
+        combining low frequencies from one noise estimate with high frequencies of the other. The algorithm is:</p>
+    
+    \[
+    \epsilon_1 = \text{UNet}(x_t, t, p_1)
+    \]
+    \[
+    \epsilon_2 = \text{UNet}(x_t, t, p_2)
+    \]
+    \[
+    \epsilon = f_{\text{lowpass}}(\epsilon_1) + f_{\text{highpass}}(\epsilon_2)
+    \]
+    
+    <p>where UNet is the diffusion model UNet, \( f_{\text{lowpass}} \) is a low-pass function, \( f_{\text{highpass}} \) is a high-pass 
+        function, and \( p_1 \) and \( p_2 \) are two different text prompt embeddings. Our final noise estimate is \( \epsilon \). 
+    </p>
+
+    <p>The Gaussian blur filter has a kernel size of 33 and a sigma of 2.</p>
+    
+</div>
+
+
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/1.9.1.png" style="width:70%">
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/1.9.2.png" style="width:70%">
+        </figure>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/1.9.3.png" style="width:50%">
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/1.9.4.png" style="width:70%">
+        </figure>
+    </div>
+</div>
+
+
+
+<div class="subheader">
+    <h2>Bells and Whistles</h2>
+</div>
+<div class="content">
+    <p>
+        I tried to design a course Logo with the techniques learned in this project.<br>
+        The first attempt is to let the diffusion model autogenerates a Logo with iterative denoising with the prompt "a logo for computer vision"
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/B&W1.png" style="width:20%">
+    </figure> 
+</div>
+
+<div class="content">
+    <p>
+        Next, I hand-drawn a logo, manually add noise, then iteratively denoised the image with SDEdit at noise level 10
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/B&W2.png" style="width:20%">
+    </figure> 
+</div>
+
+<div class="content">
+    <p>
+        Lastly, I combine the two approaches. Use both SDEdit on my hand-drawn logo AND provide a relevant prompt ("a logo for computer vision")
+        that push the model to a certain direction.
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/B&W3.png" style="width:20%">
+    </figure> 
+</div>
+
+
+<header>
+    <h2>Part B: Diffusion Models from Scratch!</h2>
+</header>
+<div class="content">
+    The work prior to this section relies heavily on a pretrained model. In this section, I will train my own diffusion model on 
+    MNIST dataset. <br>
+</div>
+
+<div class="subheader">
+    <h2>1.1 Implementing the Unconditional UNet</h2>
+</div>
+<div class="content">
+    The architecture of unconditional UNet is given by the following graph.
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.1.1.png" style="width:80%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>1.2 Train a Denoiser Using UNet</h2>
+</div>
+<div class="content">
+    <p>We aim to solve the following denoising problem: Given a noisy image \( z \), we aim to train a denoiser \( D_\theta \) such that it maps \( z \) to a clean image \( x \). To do so, we can optimize over an L2 loss:</p>
+
+    \[
+    L = \mathbb{E}_{z, x} \|D_\theta(z) - x\|^2.
+    \]
+    
+    <p>To train our denoiser, we need to generate training data pairs of \( (z, x) \), where each \( x \) is a clean MNIST digit. For each training batch, we can generate \( z \) from \( x \) using the following noising process:</p>
+    
+    \[
+    z = x + \sigma \epsilon, \quad \text{where } \epsilon \sim \mathcal{N}(0, I).
+    \]
+    
+    <p>I provided a quick visualization of the different noising processes over \( \sigma = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0] \)</p>
+    </div>
+
+<div class="full">
+    <figure>
+        <img src="./media/2.1.2.png" style="width:80%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>1.2.1 Actual Training</h2>
+</div>
+<div class="content">
+    <ul>
+        <li><strong>Objective:</strong> Train a denoiser to denoise noisy image \( z \) with \( \sigma = 0.5 \) applied to a clean image \( x \).</li>
+        <li><strong>Dataset and dataloader:</strong> Use the MNIST dataset via <code>torchvision.datasets.MNIST</code> with flags to access training and test sets. Train on the training set. 
+            Shuffle the dataset before creating the dataloader. Batch size: 256. Epochs: 5.
+            <ul>
+                <li>I noise the image batches when fetched from the dataloader, so that in every epoch the network will see new noised images. This should improving generalization.</li>
+            </ul>
+        </li>
+        <li><strong>Model:</strong> Use the UNet architecture defined in section 1.1 with hidden dimension \( D = 128 \).</li>
+        <li><strong>Optimizer:</strong> Use Adam optimizer with learning rate of \( 1\text{e-4} \).</li>    
+    </ul>
+</div>
+
+
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/2.1.3.png" style="width:80%">
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/2.1.4.png" style="width:80%">
+        </figure>
+    </div>
+</div>
+
+
+<div class="full">
+    <figure>
+        <img src="./media/2.1.5.png" style="width:30%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>1.2.2 Out-of-Distribution Testing</h2>
+</div>
+<div class="content">
+    <p>Note that my denoiser was trained on MNIST digits noised with \( \sigma = 0.5 \). Nonetheless, we can still apply the model to
+        noisy images with other \( \sigma \)'s that it wasn't trained for.</p>
+
+    <p>Below I visualized the denoiser results on test set digits with varying levels of noise \( \sigma = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 
+        1.0] \).</p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/2.1.6.png" style="width:80%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>2. Implementing Conditional UNets for Noise Prediction</h2>
+</div>
+<div class="content">
+    <p>In part A, I trained a UNet to predict the clean image. Now for diffusion, I will train two conditional UNet models that can iteratively denoise an image. 
+        I will implement algorithms listed in the <a href="https://arxiv.org/abs/2006.11239">DDPM</a> paper.</p>
+
+    <p>In the previous loss function:</p>
+    
+    \[
+    L = \mathbb{E}_{z,x}\|D_\theta(z) - x\|^2.
+    \]
+    
+    <p>We change our UNet to predict the added noise \( \epsilon \) instead of the clean image \( x \). 
+        Mathematically, these are equivalent since \( x = z - \sigma \epsilon \) (equation B.2), and here is the updated loss function</p>
+    
+    \[
+    L = \mathbb{E}_{z,x}\|\epsilon_\theta(z) - \epsilon\|^2
+    \]
+    
+    <p>where \( \epsilon_\theta \) is a UNet trained to predict noise.</p>
+    
+    <p>For diffusion, we eventually want to sample a pure noise image \( \epsilon \sim \mathcal{N}(0, I) \) and generate a realistic image \( x \) from the noise iteratively for better result.</p>
+    
+    <p>Recall in part A that we used the equation below to generate noisy images \( x_t \) from \( x_0 \) for some timestep \( t \) for \( t \in \{0, 1, \dots, T\} \):</p>
+    
+    \[
+    x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon, \quad \text{where } \epsilon \sim \mathcal{N}(0, 1).
+    \]
+    
+    <p>Intuitively, when \( t = 0 \) we want \( x_t \) to be the clean image \( x_0 \), when \( t = T \) we want \( x_t \) to be pure 
+        noise \( \epsilon \), and for \( t \in \{1, \dots, T-1\} \), \( x_t \) should be some linear combination of the two. </p>
+    
+    <ul>
+        <li>Create a list \( \beta \) of length \( T \) such that \( \beta_0 = 0.0001 \) and \( \beta_T = 0.02 \) and all other elements \( \beta_t \) for \( t \in \{1, \dots, T-1\} \) are evenly spaced between the two.</li>
+        <li>\( \alpha_t = 1 - \beta_t \)</li>
+        <li>\( \bar{\alpha}_t = \prod_{s=1}^t \alpha_s \), a cumulative product of \( \alpha_s \) for \( s \in \{1, \dots, t\} \).</li>
+    </ul>
+    
+    <p>Because we are working with simple MNIST digits, we can have a smaller \( T \) of 300 instead of the 1000 used in part A. 
+        Observe how \( \bar{\alpha}_t \) is close to 1 for small \( T \) and close to 0 for \( T \). \( \beta \) is known as the 
+        variance schedule that controls the amount of noise added at each timestep.</p>
+    
+    <p>Now, to denoise image \( x_t \), we could simply apply our UNet \( \epsilon_\theta \) on \( x_t \) and get the noise \( \epsilon \). 
+        Per our setup,  we see that the variance of \( x_t \) varies with \( t \). So during the training, I condition the UNet with 
+        timestep \( t \), giving us our final objective:</p>
+    
+    \[
+    L = \mathbb{E}_{x_0, x_t, t}\|\epsilon_\theta(x_t, t) - \epsilon\|^2
+    \]
+    
+</div>
+
+<div class="subheader">
+    <h2>2.1 Adding Time Conditioning to the UNet</h2>
+</div>
+<div class="content">
+    <p>
+        To introduce scalar t into the UNet, the follow architecture is used. It introduces a new operator called FCBlock 
+        which involve a linear-GELU-linear transformation.
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/2.2.1.png" style="width:85%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>2.2 Training the Time Conditioned UNet</h2>
+</div>
+<div class="content">
+    <p> During the training, we pick a random image from the training set, at a random \( t \), and train the denoiser to predict the 
+        noise in \( x_t \). We repeat this for different images and different \( t \) values until the model converges.</p>
+    <p>
+        In my case, I set the epoch to 20 for a fixed iteration.
+    </p>
+
+    <ul>
+        <li><strong>Objective:</strong> Train a time-conditioned UNet \( \epsilon_\theta(x_t, t) \) to predict the noise in \( x_t \) given a noisy image \( x_t \) and a timestep \( t \).</li>
+        <li><strong>Dataset and dataloader:</strong> Use the MNIST dataset via <code>torchvision.datasets.MNIST</code> with flags to access training and test sets. Train on the training set. Shuffle the dataset before creating the dataloader. Batch size: 128. Epochs: 20.
+        </li>
+        <li><strong>Model:</strong> Use the time-conditioned UNet architecture defined in section 2 with hidden dimension \( D = 64 \).
+        <li><strong>Optimizer:</strong> Use Adam optimizer with an initial learning rate of \( 1\text{e-3} \). We will be using an exponential learning rate decay scheduler with a gamma of \( 0.1^{(1.0/\text{num\_epochs})} \).
+    </ul>
+</div>
+
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/2.2.2a.png" style="width:80%">
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/2.2.2b.png" style="width:90%">
+        </figure>
+    </div>
+</div>
+
+
+<div class="subheader">
+    <h2>2.3 Sampling from the Time Conditioned UNet</h2>
+</div>
+<div class="content">
+    <p> Sampling follows the algorithm below. A sample output of the sampling is provide for the time conditioned model at epochs 5 and 20. </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.2.3.png" style="width:35%">
+    </figure> 
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.2.3a.gif" style="width:50%">
+        <figcaption>Sampling from 5 epochs model</figcaption>
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/2.2.3b.gif" style="width:50%">
+        <figcaption>Sampling from 20 epochs model</figcaption>
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>2.4 Training the Class Conditioned UNet</h2>
+</div>
+<div class="content">
+    <p> To make the results better and give us more control for image generation, I condition the UNet on the class of the digit 0-9
+    <p>
+        This require adding 2 more FCBlocks to our UNet. Since we still want the UNet to work without it being conditioned on the class, 
+        I implement dropout where the class conditioning one-hot vector is set to zero 10% of the time.
+    </p>
+
+    <p>
+        The training for this section will be the same as the time-conditioned model, with the only difference being the conditioning vector 
+        and doing unconditional generation periodically.
+    </p>
+</div>
+
+
+<div class="row">
+    <div class="column">
+        <figure>
+            <img src="./media/2.2.4a.png" style="width:80%">
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <img src="./media/2.2.4b.png" style="width:90%">
+        </figure>
+    </div>
+</div>
+
+
+<div class="subheader">
+    <h2>2.5 Sampling from the Class Conditioned UNet</h2>
+</div>
+<div class="content">
+    <p> Sample process is the almost the same as section 1.4 in iterative denoising. I added classifier-free guidance since we are now conditioning on
+        the class and have a desired natural manifold that I want to diffuse to.  </p>
+    <p>
+        A sample output of the sampling is provide for the class conditioned model 
+        at epochs 5 and 20.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/2.2.5.png" style="width:35%">
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/2.2.5a.gif" style="width:50%">
+        <figcaption>Sampling from 5 epochs model</figcaption>
+    </figure> 
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/2.2.5b.gif" style="width:50%">
+        <figcaption>Sampling from 20 epochs model</figcaption>
+    </figure> 
 </div>
 
 </body>
