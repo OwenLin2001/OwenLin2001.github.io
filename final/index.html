@@ -51,7 +51,33 @@
             width: 80%;
             height: auto; /* Maintain aspect ratio */
         }
+        .image-gallery {
+            display: flex;
+            justify-content: center;
+            gap: 20px; 
+        }
+        .image-gallery img {
+            width: 100%; 
+            height: auto; 
+            display: block;
+        }
 
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            text-align: center;
+            width: 100%;
+            gap: 5px;
+        }
+        .image-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .image-container figcaption {
+            margin-top: 5px;
+            font-style: italic;
+        }
         figcaption {
             margin-top: 10px;
             font-weight: bold;
@@ -86,22 +112,137 @@
 
     
 <div class="subheader">
-    <h2>Interpolating color from the surronding pixels</h2>
+    <h2>Part I: Morphing Structure Out of Background</h2>
 </div>
 <div class="content">
     <p> 
-        some text
+        Before turning a 2D to a 3D, we aim to morph a pile of pixel into something that has shape, 
+        and then into something that has both texture and shape. To do so, I interpolate color from the rest of the image
+        onto the object and reverse the process to mimic the transformation from background to object.
+    </p>
+</div>
+
+<div class="image-gallery">
+    <figure class="imge-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre1.jpg">
+        <figcaption>The Original Image</figcaption>
+    </figure>
+    <figure class="image-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre2.png">
+        <figcaption>Inpaint From Around + Gaussian Blurred</figcaption>
+    </figure> 
+</div>
+
+<div class="content">
+    <p> 
+        The first step is to erase the object form the image, this could easily be done using inpaint and Gaussian blur, 
+        while there are still some artifacts (like the diagonal line due to inpainting), it is acceacptable as the object
+        is no longer recognizable at first glance. However, simple reducing the inpaint or Gaussian blur intensity does not
+        do the trick of reversing the cube back into object, there are two problems: the physical shape is decomposed under inpainting
+        and illumination also looks weird, to address those two problems, I found a method called adaptive region sampling.
+    </p>
+</div>
+
+<div class="image-gallery">
+    <figure class="imge-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre3.png">
+        <figcaption>Step 1: Manual Annotatation</figcaption>
+    </figure>
+    <figure class="image-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre4.png">
+        <figcaption>Step 2: Finding the Visible Surface</figcaption>
+    </figure> 
+    <figure class="image-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre5.png">
+        <figcaption>Step 3: Extend the Edge Between Surface</figcaption>
+    </figure> 
+    <figure class="image-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre6.png">
+        <figcaption>Step 4: Use the Boundary Found to Segment Image Into Three Regions</figcaption>
+    </figure> 
+</div>
+
+<div class="content">
+    <p> 
+        Step1: The process of this adaptive region sampling is as shown above, we first manually find the corner of the object,
+        This process cannot be done using Harris Corner detection since the only corner
+        we are looking for is the corner of our object, Harris would detect other corners in the image 
+    </p>
+    <p> 
+        Step2: Using the manually annotated corners, we could get the visible surface, we would use this information
+        to reconstruct the physical structure of the object
+    </p>
+    <p> 
+        Step3: We extend the edge between the visible surfaces to make them touch the edge of the image.
+        Those extended lines would help us segment the image
+    </p>
+    <p> 
+        Step4: Using the boundary we found in Step3, we could segment our image into separate regions.
+    </p>
+</div>
+
+<div class="image-gallery">
+    <figure class="imge-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre7.png">
+        <figcaption>The Region to Sample for 'Orange Surface' Shown in step 2</figcaption>
+    </figure>
+    <figure class="image-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre8.png">
+        <figcaption>One Example Sample from the Aforementioned Region</figcaption>
+    </figure> 
+    <figure class="image-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre9.png">
+        <figcaption>Interpolated 'Orange Surface' From Multiple Samples</figcaption>
+    </figure> 
+    <figure class="image-container" style="width: 300px; height: 450px;">
+        <img src="./media/pre10.png">
+        <figcaption>Fully Interpolated Object on a=0.3</figcaption>
+    </figure> 
+</div>
+
+
+<div class="content">
+    <p> 
+        After finish the four steps above, we have the location of the visible surfaces and their corresponding selection regions.
+        We could then sample a patch the same shape as the surface within the region to interpolate onto the target surface.
+    </p>
+    <p> 
+        As shown in the example for 'orange surface' above, we do the sampling multiple times (I used 4-8 in my code),
+        average the color for each pixel location, and blend it with the pixel of the target surface with a proportion alpha.
+    </p>
+    <p> 
+        This method address the two issues we had before, since we are only sampling in a region that has similar illumination
+        as our target surface, the result after blending is going to look nice illumination-wise. Since we reserved the physical
+        structure of visible surface, as blending level become lower, the original object's physical strucure would become more and more clear.
+    </p>
+    <p> 
+        Looking at the a=0.3 midway morphing image, we could see that the texture of the object is similar to the environment, 
+        the upper surface looks like the tissue box and the left surface looks like the wood table.
+        The illumination looks correct, the right surface appear to be darker than the left surface.
+        The physical structure of the object is also identifiable, only a little vague.
+        This shows that our sampling method works!
     </p>
 </div>
 
 <div class="full">
     <figure>
-        <img src="./media/pre1.png" style="width:70%">
-        <img src="./media/pre2.jpg" style="width:70%">
-        <img src="./media/pre3.gif" style="width:30%">
+        <img src="./media/transform.png" style="width:70%">
+    </figure> 
+    <figure>
+        <img src="./media/output.gif" style="width:10%">
+        <figcaption>The Final Morphing Sequence</figcaption>
     </figure> 
 </div>
 
+<div class="content">
+    <p> 
+        Using the method above, we could adjust alpha level and produce a sequence of frames as above! 
+    </p>
+    <p> 
+        With the 'morphed from background' object as the starting point, we could start to implement the rotation that
+        rotates it into 3D!
+    </p>
+</div>
     
 <div class="subheader">
     <h2>Preliminary: Shoot and Digitize Video</h2>
@@ -109,14 +250,25 @@
 <div class="content">
     We recorded a short video of a Rubik's Cube with a moving camera. The shoot spans approximately 180 degrees, and the video was taken
     with flashlight turned on to minimize the shadow effect (although the result were not as effective as anticipated). Here
-    is the video that is used as input in this project.
+    are the video that were used as input in this project.
 </div>
-<figure>
-    <video width="450" controls>
-        <source src="./media/vid_evans.mp4" type="video/mp4">
-    </video>
-</figure>
 
+<div class="row">
+    <div class="column">
+        <figure>
+            <video width="450" controls>
+                <source src="./media/input_vid1.mp4" type="video/mp4">
+            </video>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <video width="450" controls>
+                <source src="./media/input_vid2.mp4" type="video/mp4">
+            </video>
+        </figure>
+    </div>
+</div>
 
 
 <div class="subheader">
@@ -280,10 +432,23 @@ In the figure below, two arbitrary frames are choosen where I selected the top 1
 <div class="subheader">
     <h2>Project Demonstration</h2>
 </div>
-<figure>
-    <video width="500" controls>
-        <source src="./media/vid_evans.mp4" type="video/mp4">
-    </video>
-</figure>
+
+<div class="row">
+    <div class="column">
+        <figure>
+            <video width="450" controls>
+                <source src="./media/output_vid1.mp4" type="video/mp4">
+            </video>
+        </figure>
+    </div>
+    <div class="column">
+        <figure>
+            <video width="450" controls>
+                <source src="./media/output_vid2.mp4" type="video/mp4">
+            </video>
+        </figure>
+    </div>
+</div>
+
 </body>
 </html>
