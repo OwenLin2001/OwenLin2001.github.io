@@ -432,6 +432,11 @@ In the figure below, two arbitrary frames are choosen where I selected the top 1
 <div class="subheader">
     <h2>Project Demonstration</h2>
 </div>
+<div class="content">
+    <p>
+        The outputted video are in 30 fps, both has around 550~650 frames.
+    </p>
+</div>
 
 <div class="row">
     <div class="column">
@@ -439,13 +444,15 @@ In the figure below, two arbitrary frames are choosen where I selected the top 1
             <video width="450" controls>
                 <source src="./media/output_vid1.mp4" type="video/mp4">
             </video>
+            <figcaption>Homography Composition: there are hundreds of compositions that leads to the ghosting effect.</figcaption>
         </figure>
     </div>
     <div class="column">
         <figure>
             <video width="450" controls>
-                <source src="./media/output_vid2.mp4" type="video/mp4">
+                <source src="./media/output_vid2.av1.mp4" type="video/mp4">
             </video>
+            <figcaption>Direct Homography to the reference frame: can't have a wider angle because the correspondences are no longer reliable.</figcaption>
         </figure>
     </div>
 </div>
