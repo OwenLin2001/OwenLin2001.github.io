@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 5: Fun With Diffusion Models!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0px;
+            padding: 0;
+        }
+        header {
+            background-color: #21b32d;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .subheader {
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .content {
+            font-size: large;
+            line-height: 1.5;
+            padding: 20px;
+            text-align: left;
+            margin: 10px 150px 10px;
+        }
+        .p {
+            margin: 10px 150px 10px;
+        }
+        .content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Centered caption*/
+        figure {
+          text-align: center; 
+        }
+        .container {
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-start;
+        gap: 10px; /* Space between columns */
+        }
+        img {
+            width: 80%;
+            height: auto; /* Maintain aspect ratio */
+        }
+
+        figcaption {
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        /*multi column image*/
+        .column {
+          float: left;
+          width: 49.5%;
+          padding: 1px;
+        }
+        /* Clear floats after image containers */
+        .row::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        .row {
+            margin: 10px 150px 25px;
+        }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Project 5: Fun with Diffusion Models!</h1>
+</header>
+
+    
+<div class="subheader">
+    <h2>Part A Overview: The Power of Diffusion Models!</h2>
+</div>
+<div class="content">
+    <p> In the first part of this project, I will deploy diffusion models for image generation and denoising. I am
+        going to use the DeepFloydIF diffusion model, a two stage model trained by Stability AI. It was trained as a text-to-image model,
+        thus a text encoder (T5EncoderModel) is used to compute a couple of text embeddings such as 'an oil painting of an old man' for
+        conditional generation or 'a high quality photo' for an unconditional generation.
+
+    </p>
+</div>
+
+    
+<div class="subheader">
+    <h2>1.1: Implementing the Forward Process</h2>
+</div>
+<div class="content">
+    In the forward process, we take a clean image and adds noise to it. mathematically, it is defined by
+    <p>
+    \[
+    q(x_t \mid x_0) = \mathcal{N}(x_t; \sqrt{\bar{\alpha}_t} x_0, (1 - \bar{\alpha}_t) \mathbf{I})
+    \]
+    
+    \[
+    x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon \quad \text{where} \quad \epsilon \sim \mathcal{N}(0, 1)
+    \]
+    Given a clean image \( x_0 \), we get a noisy image \( x_t \) at timestep \( t \) by sampling from a Gaussian 
+    with mean \( \sqrt{\bar{\alpha}_t} x_0 \) and variance \( (1 - \bar{\alpha}_t) \). <br>
+    For the DeepFloyd models, T = 1000.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.1.png" style="width:70%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>1.2: Classical Denoising</h2>
+</div>
+<div class="content">
+In previous projects, we used Gaussian blur filtering to try to remove the noise. Let's see the performance of such classical methods.
+We should expect bad results with so many noise added to the image.
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.2.png" style="width:70%">
+    </figure> 
+</div>
+
+<div class="subheader">
+    <h2>1.3: One-Step Denoising</h2>
+</div>
+<div class="content">
+    <p>
+        Now, we'll use the pretrained diffusion model to denoise. The actual denoiser is found at 
+        <code>stage_1.unet</code>. This is a U-Net that has already been trained on a 
+        very large dataset of (<em>x<sub>0</sub></em>, <em>x<sub>t</sub></em>) pairs of images. 
+        We can use it to estimate the Gaussian noise from the image. Then, we can remove this noise to recover 
+        the estimated original image.
+    </p>
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/1.3.png" style="width:70%">
+    </figure> 
+</div>
+
+
+<div class="subheader">
+    <h2>1.4: Iterative Denoising</h2>
+</div>
+
+<div class="content">
+    <p>
+        <p>
+            In part 1.3, we see that the denoising U-Net does a much better job of projecting the image onto the natural image manifold, but it does get worse as we add more noise. This makes sense, as the problem is much harder with more noise.
+            </p>
+            
+            <p>
+            But diffusion models are designed to denoise iteratively. In this part, we will denoise the image iteratively instead of all in one step.
+            </p>
+            
+            <p>
+            In theory, we could start with noise \( x_{1000} \) at timestep \( T = 1000 \), denoise for one step to get an estimate of \( x_{999} \), and carry on until we get \( x_0 \). But this would require running the diffusion model 1000 times, which is quite slow.
+            </p>
+            
+            <p>
+            It turns out, we can actually speed things up by skipping steps.
+            </p>
+            
+            <p>
+            To skip steps, I create a list of timesteps that called <code>strided_timesteps</code> by introducing a regular stride step of 30, which will be much shorter than the full list of 1000 timesteps. <code>strided_timesteps[0]</code> will correspond to the noisiest image (and thus the largest \( t \)) and <code>strided_timesteps[-1]</code> will correspond to a clean image (and thus \( t = 0 \)).
+            </p>
+            
+            <p>
+                
+            On the \( i \)-th denoising step we are at \( t = \text{strided_timesteps}[i] \), and want to get to \( t' = \text{strided_timesteps}[i+1] \) (from more noisy to less noisy). To actually do this, we have the following formula:
+            </p>
+            
+            <div style="text-align: center;">
+              \[
+              x_{t'} = \frac{\sqrt{\bar{\alpha}_{t'} \beta_t}}{1 - \bar{\alpha}_t} x_0 + \frac{\sqrt{\alpha_t (1 - \bar{\alpha}_{t'})}}{1 - \bar{\alpha}_t} x_t + v_\sigma
+              \]
+            </div>
+            
+            <p>
+            where:
+            <ul>
+              <li>\( x_t \) is your image at timestep \( t \).</li>
+              <li>\( x_{t'} \) is your noisy image at timestep \( t' \) where \( t' < t \) (less noisy).</li>
+              <li>\( \bar{\alpha}_t \) is defined by <code>alphas_cumprod</code>, as explained above.</li>
+              <li>\( \alpha_t = \frac{\bar{\alpha}_t}{\bar{\alpha}_{t'}} \).</li>
+              <li>\( \beta_t = 1 - \alpha_t \).</li>
+              <li>\( x_0 \) is our current estimate of the clean image</li>
+              <li>\( v_\sigma \) is random noise, which in the case of DeepFloyd is also predicted.
+            </ul>
+            </p>
+            
+    </p>
+</div>
+
+<div class="full">
+    <figure>
+        <img src="./media/1.4.1.png" style="width:70%">
+    </figure>
+    <figure>
+        <img src="./media/1.4.2.png" style="width:70%">
+    </figure>
+</div>
+
+</body>
+</html>
