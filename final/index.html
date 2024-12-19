@@ -120,7 +120,7 @@
 
 
 <div class="subheader">
-    <h2>Step 1: Detecting Corner Features</h2>
+    <h2>Detecting Corner Features</h2>
 </div>
 <div class="content">
     We will start with harris interest point detector to automatically detect corners (inherently good correspondence choice).
@@ -143,12 +143,27 @@
 </div>
 
 
+<div class="subheader">
+    <h2>Mask Segmentation with SAM </h2>
+</div>
+<div class="content">
+    Segment Anything Model (SAM) is an advanced Segmentation Model developed by Meta. The <Code>AutomaticMaskGenerator</Code> 
+    provides masks without labeling. Due to time constraint, we did not implement semantic segmentation for automatic labeling.
+    Instead, bounding box and <Code>SamPredictor</Code> were used to obtain a mask for the object and a mask for the floor.
+
+</div>
+<div class="full">
+    <figure>
+        <img src="./media/mask.png" style="width:70%">
+    </figure> 
+</div>
+
 
 <div class="subheader">
     <h2>Enhance Feature Selection: Adaptive Non-Maximal Suppression (ANMS)</h2>
 </div>
 <div class="content">
-Now we have a way to detect features, we also want some good properties among the features! In particular, we want:
+Now we have a way to detect features just on the floor surface, we also want some good properties among the features! In particular, we want:
 <ul>
     <li>Fixed number of features per image</li>
     <li>Spatially evenly distributed features</li>
@@ -160,74 +175,66 @@ The mathematical definition for the minimum suppression radius is \[ r_i = \min_
 \text{s.t.} \quad f(\mathbf{x}_i) < c_{\text{robust}} f(\mathbf{x}_j) \]
 where x<sub>i</sub>, x<sub>j</sub> are corner features, and f(x<sub>i</sub>), f(x<sub>j</sub>) are response values from harris corner.<br><br>
 I picked the same c<sub>robust</sub> = 0.9 as in the paper to ensures that a neighbor must have significantly higher strength. <br>
-In the figure below, left images use <Code>skimage.feature.peak_local_max</Code> with min_distance = 10, resulting in 3089 features.
-The right images uses the output from <code> peak_local_max</code> as the input to ANMS, which further reduces to the top 100 features with desired properties.
+In the figure below, two arbitrary frames are choosen where I selected the top 100 features with desired properties.
 </div>
 
 <div class="full">
     <figure>
-        <img src="./media/step1.2.png" style="width:100%">
+        <img src="./media/sample_ANMS.png" style="width:70%">
     </figure> 
 </div>
 
 
-<div class="subheader">
-    <h2>Segment Anything Model</h2>
-</div>
-<div class="content">
-    text
-</div>
-
 
 
 <div class="subheader">
-    <h2>Step 2: Feature Descriptor</h2>
+    <h2>Feature Descriptor</h2>
 </div>
 <div class="content">
-    Given all the corner features, I need to somehow describe the feature with feature descriptors.
-    For a basic implementation, an axis-aligned patch is used, assuming there are no rotational factor between images.
+    Given all the corner features, we need to somehow describe the feature with feature descriptors.
+    With rotation and perspective distortion factors involved, we implement Scale Invariant Feature Transform (SIFT) descriptor.
+    It utilizes gradient field around a feature:
     <ol>
-        <li>Blur the image to avoid aliasing in the feature descriptors</li>
-        <li>For each corner feature, find the 40x40 window such that the corner is at the center</li>
-        <li>Downsample by a factor of s = 5 such that the feature descriptor are 8x8</li>
-        <li>Use bias/gain normalization and force the patch to have &mu; = 0 and &sigma; = 1</li>
+        <li>Divide the bigger patch into 16 smaller image patches</li>
+        <li>For each small image patch, generate a histogram of eight gradient orientations</li>
+        <li>Stack the 16 patches and obtained a 8*16 = 128 feature descriptor vector (after flattening)</li>
     </ol>
-    The figure below shows feature descriptors for corner features in moffitL.
+    The figure below shows the mechanism behind SIFT.
 </div>
 
 <div class="full">
     <figure>
-        <img src="./media/step2.1.png" style="width:40%">
+        <img src="./media/sift.jpg" style="width:40%">
     </figure> 
 </div>
 
 
 <div class="subheader">
-    <h2>Step 3: Feature Matching</h2>
+    <h2>Feature Matching</h2>
 </div>
 <div class="content">
     Lastly, I will need to find pairs of features that look similar.
-    This is acheived by first flatten feature descriptors into vectors of length 8x8x3 = 192. Then I can compute the l<sub>2</sub> norm among all combinations
+    This is acheived by first flatten feature descriptors into vectors of length 8x16 = 128. Then I can compute the l<sub>2</sub> norm among all combinations
     between the two images to find the nearest neighbor. <br><br>
     Yet the issue is that if only
     one neighbor is used, two patches can be similar by chance or due to noise. Here, I apply Lowe's trick and compute the 
     <b>ratio between L2 of the closest match and the L2 of the second-closest match</b>.
     The idea is that if the ratio is small, then there is only one good match between the two features, which makes it more likely to be
     a true match!<br><br>
-    In my work, I select a threshold of 0.4 to show that RANSAC does work in the next section.
-    I observed that a threshold below 0.3 can already proceduce a flawless match in this set of images!<br><br>
+    With some empirical testing, a Lowe's ratio of 0.55 is used in this project
+    <br><br>
 
     The figure below demonstrates the result after apply Lowe's trick. Points labels in blue are recognized as good matching features.
 </div>
 
 <div class="full">
     <figure>
-        <img src="./media/step3.1.png" style="width:60%">
+        <img src="./media/sample_LOWE.png" style="width:70%">
     </figure> 
 </div>
 
 <div class="subheader">
-    <h2>Step 4: Random Sample Consensus(RANSAC)</h2>
+    <h2>Random Sample Consensus (RANSAC)</h2>
 </div>
 <div class="content">
     With appropriate thresholding, Lowe's trick helps us to remove most of the outliers. However, the algorithm never guarentees that
@@ -245,67 +252,38 @@ The right images uses the output from <code> peak_local_max</code> as the input 
         </li>
         <li>Re-compute least-squares <b>H</b> estimate on all of the inliers</li>
     </ol>
-</div>
-
-<div class="full">
-    <figure>
-        <img src="./media/step4.1.png" style="width:60%">
-        <img src="./media/step4.2.png" style="width:60%">
-    </figure> 
+    In the first stage, the homography is found on consecutive frames. <br>
+    Then we compute cumulative homographies using the composition property. 
+    i.e. if H12 warp 1 to 2, H23 warp 2 to 3, then H13 = H23@H12 warp 1 to 3.
 </div>
 
 <div class="subheader">
-    <h2>Step 5: More Mosaics</h2>
+    <h2>Warp to anamorphic illusion!</h2>
 </div>
 
 <div class="content">
     <p>
-    Below are the results using automatic feature matching and RANSAC. The alignment using the automated features
-    are essentially indistinguishable from hand-picked correspondence (and I believe the features are even more accurate!). 
-    Yet since least squared solution is used in computing the homography, the manual errors is mediated because 
-    the algorithm can see them as random noise.
-    </p>
-
-    <p>
-    I found the various method in auto-detecting corners to be the coolest thing. With different algorithms, we can keep refining
-    down to the correct correspondences - even to features that can't be seen by eye! If we look at the visualization for 
-    RANSAC correspondence careful, we can see that one of the features is detected on the smooth white wall!
-    </p>
-
-    <p>
-    Moreover, the results here are potential better because I reimplement the distance blending 
-    with <code>'scipy.ndimage.distance_transform_edt'</code>, and this time useing the full mask rather than just one edge.
+        In previous steps, we actually computed the inverse homography. This avoids the need of splatting in forward warping
+        and <Code>Griddata</Code> is used to obtain the color value. Additionally, <Code>bwdist</Code> is used to implement
+        distance-based blending. With the weight provided by bwdist, we can create alpha mask with the formula:
+        \[
+        a_1 = \frac{w_1}{w_1+w_2}, \quad a_2 = \frac{w_2}{w_1+w_2}
+        \]
     </p>
 </div>
-
 <div class="full">
     <figure>
-        <img src="./media/step5.1.png" style="width:80%">
+        <img src="./media/blending.png" style="width:50%">
     </figure> 
 </div>
 
-<div class="container">
-    <div class="image-column">
-        <figure>
-            <figcaption>Moffit with manual correspondences</figcaption>
-            <img src="./media/5.8.png" alt="Image 1">
-            
-        </figure>
-    </div>
-    <div class="image-column">
-        <figure>
-            <figcaption>Moffit with automatic features and distance blending</figcaption>
-            <img src="./media/step5.2.png" alt="Image 2">
-        </figure>
-    </div>
+<div class="subheader">
+    <h2>Project Demonstration</h2>
 </div>
-
-<div class="full">
-    <figure>
-        <img src="./media/step5.3.png" style="width:80%">
-        <img src="./media/step5.4.png" style="width:80%">
-    </figure> 
-</div>
-
+<figure>
+    <video width="500" controls>
+        <source src="./media/vid_evans.mp4" type="video/mp4">
+    </video>
+</figure>
 </body>
 </html>
